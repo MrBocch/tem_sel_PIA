@@ -7,7 +7,7 @@ class Item:
         return f"Peso: {self.weight} - Beneficio: {self.profit}"
 
     def __repr__(self):
-        return f"W: {self.weight}, W: {self.profit}\n"
+        return f"W: {self.weight}, P: {self.profit}\n"
 
     def to_binary(self):
         # convertir item into binario
