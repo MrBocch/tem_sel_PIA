@@ -4,10 +4,10 @@ class Item:
       self.profit = profit
 
     def __str__(self):
-        return f"Beneficio: {self.profit} - Peso: {self.weight}"
+        return f"Peso: {self.weight} - Beneficio: {self.profit}"
 
     def __repr__(self):
-        return f"P: {self.profit}, W: {self.weight}\n"
+        return f"W: {self.weight}, W: {self.profit}\n"
 
     def to_binary(self):
         # convertir item into binario
