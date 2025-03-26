@@ -98,6 +98,7 @@ def string_to_instance(s):
     # bin_size = '04b' (p+w) = (4+4)
     bin_size = 8
     s_split = [s[i:i+bin_size] for i in range(0, len(s), bin_size)]
+                         #weight          #profit
     instance = [Item(int(s_s[:4], 2), int(s_s[4:], 2)) for s_s in s_split]
     return instance
 
@@ -105,38 +106,40 @@ def next_generation(items, c1, c2):
     global W
     population = []
     for i in items:
-        # Def is causing an infinite loop
-        # my guess is i must be doing the instances wrong
         profits = [Def(i, W), MaxP(i, W), MinW(i, W), MaxPW(i, W)]
         score = [instance_profit(l) for l in profits]
         population.append(fitness(score))
 
     # eliminamos dos con peor fitness
-    def two_lowest_indices(lst):
-        low1, low2 = (0, 1) if lst[0] < lst[1] else (1, 0)
-
-        for i in range(2, len(lst)):
-            if lst[i] < lst[low1]:
-                low2, low1 = low1, i
-            elif lst[i] < lst[low2]:
-                low2 = i
-
-        return [low1, low2]
-
-    print(population)
-    for idx in two_lowest_indices(population):
-        items.pop(idx)
-
+    items = pop_two_highest(items, population)
     items.append(c1)
     items.append(c2)
     return items
+
+def two_highest_indices(lst):
+    high1, high2 = (0, 1) if lst[0] > lst[1] else (1, 0)
+
+    for i in range(2, len(lst)):
+        if lst[i] > lst[high1]:
+            high2, high1 = high1, i
+        elif lst[i] > lst[high2]:
+            high2 = i
+
+    return [high1, high2]
+
+def pop_two_highest(lst, pop):
+    indices = two_highest_indices(pop)
+    indices.sort(reverse=True)  # Sort in descending order to pop safely
+    lst.pop(indices[0])  # Pop the first highest
+    lst.pop(indices[1])  # Pop the second highest
+    return lst
 
 def training(population):
     # salimos de loop despues de cuantas iteraciones
     global TS
     iteracion = 0
     while True:
-        print(iteracion)
+        print(f"iteracion {iteracion}")
     # selection, tournament
         print("tournament")
         # partir lista en dos
@@ -160,6 +163,7 @@ def training(population):
         c2 = string_to_instance(c2)
         population = next_generation(population, c1, c2)
         iteracion += 1
+        print(len(population))
 
 population = generate_instances(10)
 training(population)
