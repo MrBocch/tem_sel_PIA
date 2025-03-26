@@ -7,7 +7,7 @@ from Heuristics import Def, MaxP, MinW, MaxPW
 W = 50
 
 # number of items
-n = 50
+n = 15
 
 # maximum weight per item
 w = 15
@@ -45,12 +45,6 @@ def generate_instances(instances):
 
 def instance_profit(items):
     return sum([i.profit for i in items])
-
-def generate_csv(file, items):
-    with open(file, "w") as f:
-        f.write('Item,Benefit,Weight\n')
-        for idx, item in enumerate(items):
-            f.write(f"{idx},{item.profit},{item.weight}\n")
 
 def tournament_winner(items):
     global W
@@ -162,8 +156,24 @@ def training(population):
         c1 = string_to_instance(c1)
         c2 = string_to_instance(c2)
         population = next_generation(population, c1, c2)
+        population = [plus_1_if_zero(p) for p in population]
         iteracion += 1
-        print(len(population))
+        print(f"population {len(population)}\n")
+
+# GA podria crear objeto con peso de zero si occure mas 1
+def plus_1_if_zero(items):
+    def correct(item):
+        if item.weight == 0:
+            item.weight += 1
+        return item
+
+    return [correct(i) for i in items]
+
+def generate_csv(file, items):
+    with open(file, "w") as f:
+        f.write('Item,Benefit,Weight\n')
+        for idx, item in enumerate(items):
+            f.write(f"{idx},{item.profit},{item.weight}\n")
 
 population = generate_instances(10)
 training(population)
