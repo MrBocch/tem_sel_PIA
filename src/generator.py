@@ -3,11 +3,17 @@ from itertools import combinations
 from Item import Item
 from Heuristics import Def, MaxP, MinW, MaxPW
 
+# number of intances
+INSTANCES = 400
+
+# Iteraciones de GA
+ITERATIONS = 20_000
+
 # capacity of knapsack
 W = 50
 
 # number of items
-n = 15
+n = 50
 
 # maximum weight per item
 w = 15
@@ -68,7 +74,6 @@ def fitness(scores):
           # )
     # return ff
 
-
 def crossover(s1, s2):
     length = min(len(s1), len(s2))
     mid = length // 2
@@ -128,37 +133,57 @@ def pop_two_highest(lst, pop):
     lst.pop(indices[1])  # Pop the second highest
     return lst
 
+# how to tell how good a population is?
+def population_fitness(population):
+    p_fit = []
+    for instance in population:
+        scores = [Def(instance, W), MaxP(instance, W), MinW(instance, W), MaxPW(instance, W)]
+        p_fit.append([instance_profit(l) for l in scores])
+
+    return p_fit
+
 def training(population):
     # salimos de loop despues de cuantas iteraciones
+    #
+    filename = "instances_first/"
+    for i in range(INSTANCES):
+        generate_csv(f"{filename}{i}.csv", population[i])
+
+    print(population_fitness(population))
     global TS
     iteracion = 0
-    while True:
+    while iteracion <= ITERATIONS:
         print(f"iteracion {iteracion}")
     # selection, tournament
-        print("tournament")
+        # print("tournament")
         # partir lista en dos
         t1 = random.sample(population[:len(population)//2], TS)
         t2 = random.sample(population[len(population)//2:], TS)
         padre1 = tournament_winner(t1)
         padre2 = tournament_winner(t2)
     # crossover
-        print("crossover")
+        # print("crossover")
         schrome_p1 = chromosome_to_string(padre1)
         schrome_p2 = chromosome_to_string(padre2)
 
         c1, c2 = crossover(schrome_p1, schrome_p2)
     # mutate
-        print("mutating")
+        # print("mutating")
         c1 = mutate(c1)
         c2 = mutate(c2)
     # new generation
-        print("next generation")
+        # print("next generation")
         c1 = string_to_instance(c1)
         c2 = string_to_instance(c2)
         population = next_generation(population, c1, c2)
         population = [plus_1_if_zero(p) for p in population]
         iteracion += 1
-        print(f"population {len(population)}\n")
+
+    # csv
+    filename = "instances/"
+    for i in range(INSTANCES):
+        generate_csv(f"{filename}{i}.csv", population[i])
+    print(population_fitness(population))
 
 # GA podria crear objeto con peso de zero si occure mas 1
 def plus_1_if_zero(items):
@@ -175,5 +200,5 @@ def generate_csv(file, items):
         for idx, item in enumerate(items):
             f.write(f"{idx},{item.profit},{item.weight}\n")
 
-population = generate_instances(10)
+population = generate_instances(INSTANCES)
 training(population)
