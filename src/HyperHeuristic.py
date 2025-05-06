@@ -22,4 +22,7 @@ def get_intances():
 
     return instances
 
-print(get_intances())
+instances = get_intances()
+
+# empezar (1 + 1) Evolutionary Algorithm
+#
