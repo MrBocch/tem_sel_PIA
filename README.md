@@ -2,8 +2,5 @@
 
 PIA para temas selectos de optimizacion
 
-## A Feature-Independent Hyper-Heuristic Approach for Solving the Knapsack Problem
+## Constructive Heuristics for the Minimum Labelling Spanning Tree Problem: a preliminary comparison
 
-## Crear instancias
-
-`python3 src/generator.py`
