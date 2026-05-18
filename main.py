@@ -213,8 +213,98 @@ def grasp(inst: Instance, alpha : float, debug=True) -> Solution:
     # movements are, within
     # trips, swap nodes
     # =====================
+    solution = local_search(inst, solution, debug)
+
+    if debug:
+        print("solution after local search")
+        print(solution)
+        print("what it eval returns")
+        test = evaluate(inst, solution)
+        print(test == solution.total_latency)
 
     return solution
+
+
+from copy import deepcopy
+# =================================
+# local search function
+# movements are swapping two clients
+# within the same trip
+# =================================
+def local_search(
+    inst: Instance,
+    solution: Solution,
+    debug: bool = False,
+) -> Solution:
+
+    best_solution = deepcopy(solution)
+
+    improved = True
+
+    while improved:
+        improved = False
+
+        # explore neighborhood
+        for t_idx, trip in enumerate(best_solution.trips):
+
+            for i in range(len(trip)):
+                for j in range(i + 1, len(trip)):
+
+                    # create candidate solution
+                    candidate = deepcopy(best_solution)
+
+                    # apply swap
+                    candidate_trip = candidate.trips[t_idx]
+
+                    candidate_trip[i], candidate_trip[j] = (
+                        candidate_trip[j],
+                        candidate_trip[i],
+                    )
+
+                    # fully re-evaluate solution
+                    candidate.total_latency = evaluate(
+                        inst,
+                        candidate,
+                    )
+
+                    # improvement found
+                    if (
+                        candidate.total_latency
+                        < best_solution.total_latency
+                    ):
+
+                        if debug:
+                            old = best_solution.total_latency
+                            new = candidate.total_latency
+
+                            print(
+                                f"swap "
+                                f"(client {trip[i]}) "
+                                f"<-> "
+                                f"(client {trip[j]}) "
+                                f"| delta: {new - old}"
+                            )
+
+                        best_solution = candidate
+                        improved = True
+
+        solution = best_solution
+
+    return best_solution
+
+def trip_latency(inst: Instance, trip: list[int]) -> int:
+    # Latency contribution of a single trip starting from depot
+    latency = 0
+    current_time = 0
+    current_node = 0
+
+    for customer in trip:
+        current_time += inst.travel_times[current_node][customer]
+        latency += current_time
+        current_time += inst.service_times[customer - 1]
+        current_node = customer
+
+    return latency
 
 
 # =================================
@@ -234,23 +324,17 @@ def evaluate(inst: Instance,solution: Solution,) -> int:
         for customer in trip:
             # travel to customer
             travel_time = inst.travel_times[current_node][customer]
-
             current_time += travel_time
-
             # customer waited until now
             total_latency += current_time
-
             # service time
             service_time = inst.service_times[customer - 1]
-
             current_time += service_time
-
             # vehicle moves to customer
             current_node = customer
 
         # return to depot after trip
         return_time = inst.travel_times[current_node][0]
-
         current_time += return_time
 
     return total_latency
@@ -258,10 +342,14 @@ def evaluate(inst: Instance,solution: Solution,) -> int:
 def main():
     instances : list[str] = get_instances_paths("instancias")
     for i in instances:
-        print("============================")
-        print(i)
+        print("\n================================================")
+        print("================================================")
         i = open_instances(i)
+        print(i, end="\n\n")
+        # print(i.travel_times)
         grasp(i, 0.3)
+        print("================================================")
+        print("================================================")
 
 
 
