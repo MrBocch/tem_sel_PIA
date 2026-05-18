@@ -208,9 +208,14 @@ def grasp(inst: Instance, alpha : float, debug=True) -> Solution:
     if debug:
         print("solution after constructive phase")
         print(solution)
+    # =====================
     # local search phase
+    # movements are, within
+    # trips, swap nodes
+    # =====================
 
     return solution
+
 
 # =================================
 # Funcion para evaluar una solucion
