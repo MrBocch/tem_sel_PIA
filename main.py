@@ -345,6 +345,11 @@ def evaluate(inst: Instance,solution: Solution,) -> int:
 
     return total_latency
 
+# ===========================================
+# testing for checking if a solution is valid
+# 1. A route does not exceed capacity
+# ===========================================
+
 def main():
     instances : list[str] = get_instances_paths("instancias")
     for i in instances:
