@@ -136,9 +136,10 @@ def open_instances(f : str) -> Instance :
     instance = Instance.from_string(contents)
     return instance
 
-# ===============
-# helper function
-# ===============
+# ========================================
+# determina si existe cliente que se puede
+# satisfaer en la ruta actual
+# ========================================
 def feasible_customers_exist(
     inst: Instance,
     unvisited_clients: set[int],
@@ -237,12 +238,7 @@ from copy import deepcopy
 # movements are swapping two clients
 # within the same trip
 # =================================
-def local_search(
-    inst: Instance,
-    solution: Solution,
-    debug: bool = False,
-) -> Solution:
-
+def local_search(inst: Instance, solution: Solution, debug: bool = False) -> Solution:
     best_solution = deepcopy(solution)
 
     improved = True
@@ -250,68 +246,43 @@ def local_search(
     while improved:
         improved = False
 
-        # explore neighborhood
+        global_best_candidate = None
+        global_best_delta = 0
+        best_move_info = None  # (trip_idx, i, j)
+
+        # explore full neighborhood
         for t_idx, trip in enumerate(best_solution.trips):
 
             for i in range(len(trip)):
                 for j in range(i + 1, len(trip)):
 
-                    # create candidate solution
                     candidate = deepcopy(best_solution)
-
-                    # apply swap
                     candidate_trip = candidate.trips[t_idx]
 
-                    candidate_trip[i], candidate_trip[j] = (
-                        candidate_trip[j],
-                        candidate_trip[i],
-                    )
+                    # apply swap
+                    candidate_trip[i], candidate_trip[j] = (candidate_trip[j],candidate_trip[i],)
 
-                    # fully re-evaluate solution
-                    candidate.total_latency = evaluate(
-                        inst,
-                        candidate,
-                    )
+                    candidate.total_latency = evaluate(inst, candidate)
 
-                    # improvement found
-                    if (
-                        candidate.total_latency
-                        < best_solution.total_latency
-                    ):
+                    delta = best_solution.total_latency - candidate.total_latency
 
-                        if debug:
-                            old = best_solution.total_latency
-                            new = candidate.total_latency
+                    if delta > global_best_delta:
+                        global_best_delta = delta
+                        global_best_candidate = candidate
+                        best_move_info = (t_idx, i, j)
 
-                            print(
-                                f"swap "
-                                f"(client {trip[i]}) "
-                                f"<-> "
-                                f"(client {trip[j]}) "
-                                f"| delta: {new - old}"
-                            )
+        # apply best move of full neighborhood
+        if global_best_candidate is not None:
+            best_solution = global_best_candidate
+            improved = True
 
-                        best_solution = candidate
-                        improved = True
-
-        solution = best_solution
+            if debug:
+                t_idx, i, j = best_move_info
+                trip = best_solution.trips[t_idx]
+                t_idx, i, j = best_move_info
+                print(f"best swap in iteration: trip {t_idx+1}, {trip[i]} <-> {trip[j]}, gain {global_best_delta}")
 
     return best_solution
-
-def trip_latency(inst: Instance, trip: list[int]) -> int:
-    # Latency contribution of a single trip starting from depot
-    latency = 0
-    current_time = 0
-    current_node = 0
-
-    for customer in trip:
-        current_time += inst.travel_times[current_node][customer]
-        latency += current_time
-        current_time += inst.service_times[customer - 1]
-        current_node = customer
-
-    return latency
-
 
 # =================================
 # Funcion para evaluar una solucion
@@ -352,16 +323,27 @@ def evaluate(inst: Instance,solution: Solution,) -> int:
 
 def main():
     instances : list[str] = get_instances_paths("instancias")
-    for i in instances:
-        print("\n================================================")
-        print("================================================")
-        i = open_instances(i)
-        print(i, end="\n\n")
-        # print(i.travel_times)
-        grasp(i, 0.3)
-        print("================================================")
-        print("================================================")
+    for f in instances:
+        print("\n===============================================================================================")
+
+        print(f)
+        i = open_instances(f)
+        print(f"Clients: {i.nb_clients}")
+        print(f"Clients: {i.client_demands}")
+        print(f"Vehicle Capacity: {i.vehicle_capacity}")
+        for alpha in [0.3, 0.5, 0.8]:
+            print(f"With α: {alpha}")
+            for n in range(1,4):
+                # print(i, end="\n\n")
+                # print(i.travel_times)
+                print(f"{n}:", end = "")
+                sol = grasp(i, alpha, debug=False)
+                print(sol)
+            print("------------------------------------------------------------------------------------------------")
+
+        print("================================================================================================")
 
 
 
 main()
+
