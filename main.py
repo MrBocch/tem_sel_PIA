@@ -33,12 +33,21 @@ class Instance:
 
         lines.append("\nService Times:")
         lines.append(" ".join(map(str, self.service_times)))
+        
 
         lines.append("\nTravel Time Matrix:")
+        header = "  | " + " ".join(f"{i:4}" for i in range(self.nb_clients + 1))
+        lines.append(header)
+        lines.append("-" * len(header))
 
-        for row in self.travel_times:
-            formatted = " ".join(f"{x:4}" for x in row)
+        for idx, row in enumerate(self.travel_times):
+            label = "D" if idx == 0 else str(idx)
+            formatted = f"{label:2}| " + " ".join(f"{x:4}" for x in row)
             lines.append(formatted)
+
+        # for row in self.travel_times:
+        #     formatted = " ".join(f"{x:4}" for x in row)
+        #     lines.append(formatted)
 
         return "\n".join(lines)
 
@@ -132,10 +141,10 @@ def open_instances(f : str) -> Instance :
 # ===============
 def feasible_customers_exist(
     inst: Instance,
-    unvisited: set[int],
+    unvisited_clients: set[int],
     remaining_capacity: int,
 ) -> bool:
-    for customer in unvisited:
+    for customer in unvisited_clients:
         demand = inst.client_demands[customer - 1]
 
         if demand <= remaining_capacity:
@@ -163,20 +172,20 @@ def build_rcl(
 def grasp(inst: Instance, alpha : float, debug=True) -> Solution:
     trips: list[list[int]] = []
     remaining_capacity : int = inst.vehicle_capacity
-    unvisited: set[int] = set(range(1, inst.nb_clients + 1))
+    unvisited_clients: set[int] = set(range(1, inst.nb_clients + 1))
 
     # constructive phase
     # Deposit is node (0)
-    while len(unvisited) != 0:
+    while len(unvisited_clients) != 0:
         current_trip: list[int] = []
         remaining_capacity = inst.vehicle_capacity
         current_node = 0
 
-        while feasible_customers_exist(inst, unvisited, remaining_capacity):
+        while feasible_customers_exist(inst, unvisited_clients, remaining_capacity):
             # consiguir candidatos que almenos pueden ser satisfasidos
             # lista de candidatos (candidato, costo)
             candidates: list[tuple[int, int]] = []
-            for customer in unvisited:
+            for customer in unvisited_clients:
                 demand = inst.client_demands[customer - 1]
 
                 if demand <= remaining_capacity:
@@ -191,7 +200,7 @@ def grasp(inst: Instance, alpha : float, debug=True) -> Solution:
             current_trip.append(chosen)
 
             # remover de no visitados
-            unvisited.remove(chosen)
+            unvisited_clients.remove(chosen)
 
             # actualizar capacidad
             remaining_capacity -= (inst.client_demands[chosen - 1])
@@ -218,9 +227,6 @@ def grasp(inst: Instance, alpha : float, debug=True) -> Solution:
     if debug:
         print("solution after local search")
         print(solution)
-        print("what it eval returns")
-        test = evaluate(inst, solution)
-        print(test == solution.total_latency)
 
     return solution
 
